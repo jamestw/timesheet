@@ -52,30 +52,34 @@ const Login: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       {/* Replace with shadcn/ui Card component */}
       <div className="p-8 bg-white rounded shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">登入</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">Username</label>
+            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">電子信箱</label>
             {/* Replace with shadcn/ui Input component */}
             <input
-              type="text"
+              type="email"
               id="username"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-white"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              placeholder="請輸入電子信箱"
               required
+              style={{ backgroundColor: 'white', WebkitAppearance: 'none' }}
             />
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">Password</label>
+            <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">密碼</label>
             {/* Replace with shadcn/ui Input component */}
             <input
               type="password"
               id="password"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline bg-white"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="請輸入密碼"
               required
+              style={{ backgroundColor: 'white', WebkitAppearance: 'none' }}
             />
           </div>
           {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
@@ -85,7 +89,7 @@ const Login: React.FC = () => {
               type="submit"
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
             >
-              Sign In
+              登入
             </button>
           </div>
           <div className="mt-6 text-center">

@@ -137,3 +137,39 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* 修復手機端輸入框背景色問題 */
+@layer components {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    background-color: white !important;
+    color: #374151 !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+  }
+
+  /* 特別針對iOS Safari的修正 */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    background-color: white !important;
+    color: #374151 !important;
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+  }
+
+  /* 自動填充時的樣式修正 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #374151 !important;
+    background-color: white !important;
+  }
+}
