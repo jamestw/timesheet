@@ -9,6 +9,7 @@ class CompanyCreate(BaseModel):
     address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    attendance_distance_limit: Optional[float] = 100.0  # 打卡距離限制(公尺)
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -20,6 +21,7 @@ class CompanyUpdate(BaseModel):
     address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    attendance_distance_limit: Optional[float] = None  # 打卡距離限制(公尺)
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
@@ -34,6 +36,7 @@ class Company(BaseModel):
     address: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    attendance_distance_limit: float = 100.0  # 打卡距離限制(公尺)
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None

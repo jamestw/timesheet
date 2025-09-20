@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { startOfWeek, endOfWeek, format } from 'date-fns';
-import { Clock, LogOut, Calendar, AlertCircle } from 'lucide-react';
+import { format } from 'date-fns';
+import { Clock, LogOut, AlertCircle, Calendar } from 'lucide-react';
 
 import api from '../services/api';
 import { Button } from '@/components/components/ui/button';
@@ -27,15 +27,15 @@ import {
   AlertTitle,
 } from "@/components/components/ui/alert"
 
-
-import { useUser } from '../contexts/UserContext'; // Import useUser hook
+import { useUser } from '../contexts/UserContext';
+import BottomNavigation from '../components/BottomNavigation';
 
 
 // Define the structure of an attendance record
 interface AttendanceRecord {
   id: number;
   record_time: string;
-  record_type: 'check-in' | 'check-out' | 'other';
+  record_type: 'check_in' | 'check_out' | 'other';
   status: string;
 }
 
@@ -44,8 +44,12 @@ type AttendanceType = 'check-in' | 'check-out' | 'other';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useUser(); // Get user from context
-  const [attendanceType, setAttendanceType] = useState<AttendanceType>('check-in');
+  const { user } = useUser();
+  const [attendanceType, setAttendanceType] = useState<AttendanceType>(() => {
+    // Default to morning/afternoon based on current time
+    const currentHour = new Date().getHours();
+    return currentHour < 12 ? 'check-in' : 'check-out';
+  });
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,31 +61,44 @@ const Dashboard: React.FC = () => {
   console.log("Dashboard - User role:", user?.role);
   console.log("Dashboard - Is admin:", isAdmin);
 
-  const fetchAttendanceRecords = useCallback(async () => {
+  // Get current time info for display
+  const getCurrentTimeInfo = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const period = hour < 12 ? '上午' : '下午';
+    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const time = `${displayHour}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    return {
+      date: format(now, 'yyyy年M月d日 EEEE', { locale: undefined }),
+      time: `${time}${period}`,
+      period
+    };
+  };
+
+  const timeInfo = getCurrentTimeInfo();
+
+  const fetchTodayAttendanceRecords = useCallback(async () => {
     setIsLoading(true);
     try {
       const today = new Date();
-      const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday as the first day
-      const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
-
       const params = {
-        start_date: format(weekStart, 'yyyy-MM-dd'),
-        end_date: format(weekEnd, 'yyyy-MM-dd'),
+        start_date: format(today, 'yyyy-MM-dd'),
+        end_date: format(today, 'yyyy-MM-dd'),
       };
 
       const response = await api.get('/attendance/records', { params });
       setAttendanceRecords(response.data);
     } catch (error: any) {
       console.error('Failed to fetch attendance records:', error);
-      setMessage({ type: 'error', text: '無法載入打卡紀錄。' });
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAttendanceRecords();
-  }, [fetchAttendanceRecords]);
+    fetchTodayAttendanceRecords();
+  }, [fetchTodayAttendanceRecords]);
 
   const getCurrentLocation = (): Promise<{ latitude: number; longitude: number }> => {
     return new Promise((resolve, reject) => {
@@ -139,7 +156,7 @@ const Dashboard: React.FC = () => {
           type: 'success',
           text: `${response.data.message || `${attendanceType} successful.`} 距離公司: ${response.data.distance_from_company}m`
         });
-        fetchAttendanceRecords(); // Refresh records after action
+        fetchTodayAttendanceRecords(); // Refresh records after action
       } else {
         setMessage({ type: 'error', text: '此功能尚未實現。' });
       }
@@ -154,111 +171,171 @@ const Dashboard: React.FC = () => {
     navigate('/login');
   };
 
-  const getRecordTypeDisplay = (type: AttendanceType) => {
+  const getRecordTypeDisplay = (type: string) => {
     switch (type) {
+      case 'check_in': return '上班';
       case 'check-in': return '上班';
+      case 'check_out': return '下班';
       case 'check-out': return '下班';
       default: return '其他';
     }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-3xl mx-auto">
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">儀表板</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-50 pb-20">
+      {/* Header */}
+      <header className="bg-white shadow-sm px-4 py-3">
+        <div className="flex justify-between items-center">
+          <h1 className="text-lg font-semibold text-gray-800">U-Clock</h1>
           <div className="flex items-center gap-2">
-            {user?.email && (
-              <span className="text-sm text-gray-600 px-2">
-                {user.email}
-              </span>
-            )}
             {isAdmin && (
-              <Button variant="ghost" onClick={() => navigate('/admin')}>
-                後台管理
+              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')}>
+                後台
               </Button>
             )}
-            <Button variant="ghost" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              登出
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
-        </header>
+        </div>
+      </header>
 
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center px-6 py-8">
+        {/* Date and Time Display */}
+        <div className="text-center mb-8">
+          <p className="text-gray-600 text-sm mb-2">{timeInfo.date}</p>
+          <h2 className="text-4xl font-bold text-gray-800 mb-1">{timeInfo.time}</h2>
+        </div>
+
+        {/* Error/Success Message */}
         {message && (
-          <Alert variant={message.type === 'error' ? 'destructive' : 'default'} className="mb-6">
+          <Alert variant={message.type === 'error' ? 'destructive' : 'default'} className="mb-6 max-w-md">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>{message.type === 'error' ? '錯誤' : '成功'}</AlertTitle>
-            <AlertDescription>
+            <AlertDescription className="text-sm">
               {message.text}
             </AlertDescription>
           </Alert>
         )}
 
-        <Card className="w-full mb-8">
-          <CardHeader className="text-center">
-            <CardTitle>打卡鐘</CardTitle>
-            <CardDescription>請選擇類型後打卡</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center gap-6">
-            <ToggleGroup
-              type="single"
-              value={attendanceType}
-              onValueChange={(value: AttendanceType) => {
-                if (value) setAttendanceType(value);
-              }}
+        {/* Attendance Type Toggle */}
+        <div className="mb-8">
+          <ToggleGroup
+            type="single"
+            value={attendanceType}
+            onValueChange={(value: AttendanceType) => {
+              if (value) setAttendanceType(value);
+            }}
+            className="bg-gray-100 p-1 rounded-lg"
+          >
+            <ToggleGroupItem
+              value="check-in"
+              className="data-[state=on]:bg-green-600 data-[state=on]:text-white data-[state=on]:shadow-md px-6 py-2 rounded-md transition-all text-gray-700 hover:text-gray-900"
             >
-              <ToggleGroupItem value="check-in">上班</ToggleGroupItem>
-              <ToggleGroupItem value="check-out">下班</ToggleGroupItem>
-              <ToggleGroupItem value="other" disabled>其他</ToggleGroupItem>
-            </ToggleGroup>
-            <Button size="lg" className="w-48 h-16 rounded-full text-xl" onClick={handlePunch}>
-              <Clock className="mr-2 h-6 w-6" />
-              打卡
-            </Button>
-          </CardContent>
-        </Card>
+              上班
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="check-out"
+              className="data-[state=on]:bg-blue-600 data-[state=on]:text-white data-[state=on]:shadow-md px-6 py-2 rounded-md transition-all text-gray-700 hover:text-gray-900"
+            >
+              下班
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="other"
+              disabled
+              className="px-6 py-2 rounded-md opacity-50 cursor-not-allowed text-gray-400"
+            >
+              其他
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
 
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="mr-2 h-5 w-5" />
-              本周打卡紀錄
+        {/* Punch Button */}
+        <Button
+          size="lg"
+          className={`w-40 h-40 rounded-full text-lg shadow-lg hover:shadow-xl transition-all ${
+            attendanceType === 'check-in'
+              ? 'bg-green-600 hover:bg-green-700'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+          onClick={handlePunch}
+        >
+          <div className="flex flex-col items-center">
+            <Clock className="w-10 h-10 mb-2" />
+            <span className="text-white font-medium">打卡</span>
+          </div>
+        </Button>
+
+        {/* User Info */}
+        {user?.email && (
+          <p className="text-gray-500 text-sm mt-8">
+            {user.email}
+          </p>
+        )}
+      </div>
+
+      {/* Today's Attendance Records */}
+      <div className="px-4 pb-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-base">
+              <Calendar className="mr-2 h-4 w-4" />
+              今日打卡紀錄
             </CardTitle>
-            <CardDescription>
-              以下是您本周的打卡時間紀錄。
-            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>日期</TableHead>
-                  <TableHead>時間</TableHead>
-                  <TableHead>類型</TableHead>
-                  <TableHead>狀態</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow><TableCell colSpan={4} className="text-center">載入中...</TableCell></TableRow>
-                ) : attendanceRecords.length > 0 ? (
-                  attendanceRecords.map((record) => (
+            {isLoading ? (
+              <div className="text-center py-4 text-gray-500 text-sm">載入中...</div>
+            ) : attendanceRecords.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">時間</TableHead>
+                    <TableHead className="text-xs">類型</TableHead>
+                    <TableHead className="text-xs">狀態</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {attendanceRecords.map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell>{format(new Date(record.record_time), 'yyyy-MM-dd (E)')}</TableCell>
-                      <TableCell>{format(new Date(record.record_time), 'HH:mm:ss')}</TableCell>
-                      <TableCell>{getRecordTypeDisplay(record.record_type)}</TableCell>
-                      <TableCell>{record.status}</TableCell>
+                      <TableCell className="text-sm py-2">
+                        {format(new Date(record.record_time), 'HH:mm:ss')}
+                      </TableCell>
+                      <TableCell className="text-sm py-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          record.record_type === 'check_in'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {getRecordTypeDisplay(record.record_type)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-sm py-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          record.status === 'normal'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {record.status === 'normal' ? '正常' : record.status}
+                        </span>
+                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow><TableCell colSpan={4} className="text-center">本周無打卡紀錄。</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-6 text-gray-500 text-sm">
+                <Clock className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p>今日尚無打卡紀錄</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };

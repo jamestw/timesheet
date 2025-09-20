@@ -34,6 +34,7 @@ interface Company {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
+  attendance_distance_limit: number;
   contact_person: string | null;
   contact_email: string | null;
   contact_phone: string | null;
@@ -50,6 +51,7 @@ const Companies: React.FC = () => {
     address: '',
     latitude: '',
     longitude: '',
+    attendance_distance_limit: '100',
     contact_person: '',
     contact_email: '',
     contact_phone: '',
@@ -78,11 +80,12 @@ const Companies: React.FC = () => {
 
   const handleAddCompany = async () => {
     try {
-      // Prepare data with proper type conversion for latitude/longitude
+      // Prepare data with proper type conversion for latitude/longitude/distance
       const companyData = {
         ...newCompany,
         latitude: newCompany.latitude ? parseFloat(newCompany.latitude) : null,
         longitude: newCompany.longitude ? parseFloat(newCompany.longitude) : null,
+        attendance_distance_limit: newCompany.attendance_distance_limit ? parseFloat(newCompany.attendance_distance_limit) : 100.0,
       };
 
       if (isEditMode && editingCompanyId) {
@@ -106,6 +109,7 @@ const Companies: React.FC = () => {
       address: company.address || '',
       latitude: company.latitude?.toString() || '',
       longitude: company.longitude?.toString() || '',
+      attendance_distance_limit: company.attendance_distance_limit?.toString() || '100',
       contact_person: company.contact_person || '',
       contact_email: company.contact_email || '',
       contact_phone: company.contact_phone || '',
@@ -132,6 +136,7 @@ const Companies: React.FC = () => {
       address: '',
       latitude: '',
       longitude: '',
+      attendance_distance_limit: '100',
       contact_person: '',
       contact_email: '',
       contact_phone: '',
@@ -204,6 +209,22 @@ const Companies: React.FC = () => {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="attendance_distance_limit" className="text-right">
+                  打卡距離限制 (公尺)
+                </Label>
+                <Input
+                  id="attendance_distance_limit"
+                  type="number"
+                  min="10"
+                  max="5000"
+                  step="10"
+                  placeholder="例如: 100"
+                  value={newCompany.attendance_distance_limit}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="contact_person" className="text-right">
                   聯絡人
                 </Label>
@@ -239,6 +260,7 @@ const Companies: React.FC = () => {
               <TableHead>地址</TableHead>
               <TableHead>緯度</TableHead>
               <TableHead>經度</TableHead>
+              <TableHead>打卡距離限制(m)</TableHead>
               <TableHead>聯絡人</TableHead>
               <TableHead>聯絡信箱</TableHead>
               <TableHead>聯絡電話</TableHead>
@@ -247,7 +269,7 @@ const Companies: React.FC = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={9} className="text-center">載入中...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center">載入中...</TableCell></TableRow>
             ) : companies.map((company) => (
               <TableRow key={company.id}>
                 <TableCell>{company.id}</TableCell>
@@ -255,6 +277,7 @@ const Companies: React.FC = () => {
                 <TableCell>{company.address || '-'}</TableCell>
                 <TableCell>{company.latitude || '-'}</TableCell>
                 <TableCell>{company.longitude || '-'}</TableCell>
+                <TableCell>{company.attendance_distance_limit || 100}m</TableCell>
                 <TableCell>{company.contact_person || '-'}</TableCell>
                 <TableCell>{company.contact_email || '-'}</TableCell>
                 <TableCell>{company.contact_phone || '-'}</TableCell>

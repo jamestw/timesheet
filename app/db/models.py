@@ -42,6 +42,7 @@ class Company(Base):
     address = Column(String)
     latitude = Column(DECIMAL(10, 8))
     longitude = Column(DECIMAL(11, 8))
+    attendance_distance_limit = Column(DECIMAL(6, 2), nullable=False, default=100.0)  # 打卡距離限制(公尺)
     admin_user_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     contact_person = Column(String)
     contact_email = Column(String)

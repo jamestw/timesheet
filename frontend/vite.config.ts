@@ -18,10 +18,14 @@ export default defineConfig({
         enabled: true,
       },
       manifest: {
-        name: 'Timesheet System PWA',
-        short_name: 'Timesheet',
-        description: 'Smart Attendance & Timesheet System',
-        theme_color: '#ffffff',
+        name: 'U-Clock 智能打卡系統',
+        short_name: 'U-Clock',
+        description: 'U-Clock 智能打卡系統 - 簡單高效的企業考勤管理',
+        start_url: '/',
+        display: 'standalone',
+        orientation: 'portrait',
+        theme_color: '#3B82F6',
+        background_color: '#FFFFFF',
         icons: [
           {
             src: 'pwa-192x192.png',

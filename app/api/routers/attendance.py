@@ -31,17 +31,18 @@ def check_in(
         raise HTTPException(status_code=404, detail="Company not found")
 
     # Validate location if company has coordinates set
+    distance_limit = float(company.attendance_distance_limit) if company.attendance_distance_limit else 100.0
     is_valid_location, distance = is_within_range(
         user_latitude, user_longitude,
         float(company.latitude) if company.latitude else None,
         float(company.longitude) if company.longitude else None,
-        max_distance=100.0  # 100 meters
+        max_distance=distance_limit
     )
 
     if not is_valid_location:
         raise HTTPException(
             status_code=403,
-            detail=f"You are {distance:.1f}m away from the company location. Please check-in within 100m of the office."
+            detail=f"You are {distance:.1f}m away from the company location. Please check-in within {distance_limit:.0f}m of the office."
         )
 
     # Check if already checked in today
@@ -94,17 +95,18 @@ def check_out(
         raise HTTPException(status_code=404, detail="Company not found")
 
     # Validate location if company has coordinates set
+    distance_limit = float(company.attendance_distance_limit) if company.attendance_distance_limit else 100.0
     is_valid_location, distance = is_within_range(
         user_latitude, user_longitude,
         float(company.latitude) if company.latitude else None,
         float(company.longitude) if company.longitude else None,
-        max_distance=100.0  # 100 meters
+        max_distance=distance_limit
     )
 
     if not is_valid_location:
         raise HTTPException(
             status_code=403,
-            detail=f"You are {distance:.1f}m away from the company location. Please check-out within 100m of the office."
+            detail=f"You are {distance:.1f}m away from the company location. Please check-out within {distance_limit:.0f}m of the office."
         )
 
     # Check if already checked out today

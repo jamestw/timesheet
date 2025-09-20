@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Production Deployment Script for Timesheet System
+# Timesheet System Complete Deployment Script
+# This script deploys both frontend and backend components
 # Author: Claude Code Assistant
-# Version: 1.0
+# Version: 2.0
 
 set -e  # Exit on any error
 
@@ -14,10 +15,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_NAME="timesheet-system"
-DEPLOY_PATH="/opt/timesheet-system"
-BACKUP_PATH="/opt/timesheet-system/backups"
-LOG_FILE="/var/log/timesheet-deploy.log"
+VPS_HOST="root@185.201.8.177"
+VPS_PATH="/home/docker/timesheet"
 
 # Functions
 log() {
