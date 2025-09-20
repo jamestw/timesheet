@@ -88,7 +88,7 @@ const Attendance: React.FC = () => {
 
   const fetchDepartments = useCallback(async (companyId: string) => {
     try {
-      const response = await api.get(`/companies/${companyId}/departments`);
+      const response = await api.get(`/companies/${companyId}/departments/`);
       setDepartments(response.data);
     } catch (error) {
       console.error('Failed to fetch departments:', error);
@@ -98,7 +98,7 @@ const Attendance: React.FC = () => {
 
   const fetchUsers = useCallback(async (companyId: string) => {
     try {
-      const response = await api.get(`/companies/${companyId}/users`);
+      const response = await api.get(`/companies/${companyId}/users/`);
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);

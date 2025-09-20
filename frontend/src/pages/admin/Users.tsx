@@ -90,7 +90,7 @@ const UsersComponent: React.FC = () => {
 
   const fetchDepartments = useCallback(async (companyId: string) => {
     try {
-      const response = await api.get(`/companies/${companyId}/departments`);
+      const response = await api.get(`/companies/${companyId}/departments/`);
       setDepartments(response.data);
     } catch (error) {
       console.error('Failed to fetch departments:', error);
@@ -101,7 +101,7 @@ const UsersComponent: React.FC = () => {
   const fetchUsers = useCallback(async (companyId: string) => {
     setIsLoading(true);
     try {
-      const response = await api.get(`/companies/${companyId}/users`);
+      const response = await api.get(`/companies/${companyId}/users/`);
       setUsers(response.data);
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -175,7 +175,7 @@ const UsersComponent: React.FC = () => {
     }
 
     try {
-      await api.put(`/companies/${selectedCompany}/users/${editingUser.id}`, updatePayload);
+      await api.put(`/companies/${selectedCompany}/users/${editingUser.id}/`, updatePayload);
       setIsEditDialogOpen(false);
       setEditingUser(null);
       fetchUsers(selectedCompany);
