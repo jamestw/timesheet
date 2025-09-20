@@ -1,0 +1,8 @@
+[plugin:vite:import-analysis] Failed to resolve import "@radix-ui/react-switch" from "src/components/components/ui/switch.tsx". Does the file exist?
+E:/Works/project/TimesheetSystemV2/frontend/src/components/components/ui/switch.tsx:4:34
+17 |  "use client";
+18 |  import * as React from "react";
+19 |  import * as SwitchPrimitives from "@radix-ui/react-switch";
+   |                                     ^
+20 |  import { cn } from "@/components/lib/utils";
+21 |  const Switch = React.forwardRef(

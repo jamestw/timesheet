@@ -1,0 +1,16 @@
+{
+  "username": "testuser_123456",
+  "email": "test@example.com",
+  "password": "testpass123",
+  "first_name": "測試",
+  "last_name": "用戶",
+  "phone": "0912345678",
+  "gender": "female",
+  "birth_date": "1990-01-01",
+  "address": "台北市信義區",
+  "emergency_contact_name": "緊急聯絡人",
+  "emergency_contact_phone": "0987654321",
+  "id_number": "A123456789",
+  "employee_number": "EMP001",
+  "company_tax_id": "12345670"
+}

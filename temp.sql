@@ -1,0 +1,1 @@
+SELECT id, username, email, password_hash, is_active, is_admin FROM users WHERE username = 'sales1@abc.com';
