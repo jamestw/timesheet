@@ -1,15 +1,109 @@
-# React + TypeScript + Vite
+# Timesheet System Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React PWA frontend for the Timesheet System.
 
-Currently, two official plugins are available:
+## Development Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Environment Configuration
 
-## Expanding the ESLint configuration
+The frontend can be configured for different environments:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+#### Production Environment (Firebase)
+- Uses `frontend/.env.production`
+- API Base URL: `https://timesheet.aerocars.cc/api/v1`
+- Deployed to: `https://timesheet-5fff2.web.app`
+
+#### Local Development Environment
+- Uses `frontend/.env.local` (create this file locally)
+- Should point to production API for development
+- This file is ignored by Git
+
+Create `frontend/.env.local` for local development:
+```env
+# Use production API for local development
+VITE_API_BASE_URL=https://timesheet.aerocars.cc/api/v1
+VITE_APP_TITLE=Timesheet System (Dev)
+VITE_APP_VERSION=1.0.0-dev
+```
+
+### Development Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Deploy to Firebase
+./deploy.sh
+```
+
+### API Connection
+
+The frontend automatically connects to:
+- **Local Development**: Production API (via `.env.local`)
+- **Production Build**: Production API (via `.env.production`)
+
+This setup allows for local frontend development without running a local backend.
+
+### Test Accounts
+
+Use these accounts for testing:
+
+| Email | Password | Role |
+|-------|----------|------|
+| superadmin@example.com | password123 | Super Admin |
+| companyadmin@example.com | password123 | Company Admin |
+| user@example.com | password123 | Employee |
+
+### Troubleshooting
+
+#### Login Error: "ERR_CONNECTION_REFUSED"
+- **Cause**: Missing `.env.local` file in development
+- **Solution**: Create `frontend/.env.local` with production API URL
+
+#### Dark Input Backgrounds on Mobile
+- **Fixed**: Added CSS overrides in `src/index.css`
+- **Includes**: iOS Safari fixes and autofill styling
+
+#### CORS Errors
+- **Check**: API endpoints are properly configured with HTTPS
+- **Verify**: Production API has correct CORS headers
+
+### Project Structure
+
+```
+frontend/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── contexts/       # React contexts (UserContext)
+│   ├── pages/          # Page components
+│   ├── services/       # API services
+│   └── main.tsx       # App entry point
+├── public/            # Static assets
+├── .env.production    # Production environment (committed)
+├── .env.local         # Local development (not committed)
+└── deploy.sh          # Deployment script
+```
+
+### Technologies Used
+
+- **React 19** with TypeScript
+- **Vite** for build tooling
+- **Tailwind CSS** for styling
+- **shadcn/ui** for UI components
+- **Axios** for API calls
+- **React Router** for navigation
+- **Firebase Hosting** for deployment
+- **PWA** capabilities via vite-plugin-pwa
+
+## React + TypeScript + Vite Configuration
+
+If you are developing a production application, we recommend updating the ESLint configuration to enable type-aware lint rules:
 
 ```js
 export default tseslint.config([
