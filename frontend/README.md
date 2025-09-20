@@ -66,13 +66,19 @@ Use these accounts for testing:
 - **Cause**: Missing `.env.local` file in development
 - **Solution**: Create `frontend/.env.local` with production API URL
 
+#### CORS Error: "blocked by CORS policy"
+- **Cause**: Production API CORS policy restricts origins
+- **Fixed**: Backend nginx configuration supports localhost origins for development
+- **Supported Origins**: `https://timesheet-5fff2.web.app`, `http://localhost:*`, `http://127.0.0.1:*`
+
 #### Dark Input Backgrounds on Mobile
 - **Fixed**: Added CSS overrides in `src/index.css`
 - **Includes**: iOS Safari fixes and autofill styling
 
-#### CORS Errors
-- **Check**: API endpoints are properly configured with HTTPS
-- **Verify**: Production API has correct CORS headers
+#### Login Error: "Bad Request"
+- **Common Cause**: Incorrect password
+- **Correct Password**: `password123` (not `password`)
+- **Test Accounts**: Use emails from the test accounts table above
 
 ### Project Structure
 
