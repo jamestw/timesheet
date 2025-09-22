@@ -18,6 +18,9 @@ origins = [
     "http://127.0.0.1:5174",
     "http://127.0.0.1:5175",
     "http://127.0.0.1:5177",
+    # Firebase hosting
+    "https://timesheet-5fff2.web.app",
+    "https://timesheet-5fff2.firebaseapp.com",
     # Production origins (will be added dynamically based on environment)
 ]
 
