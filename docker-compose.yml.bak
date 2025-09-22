@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Internal only - using external PostgreSQL)
+  # Commented out since using existing PostgreSQL on port 5432
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: timesheet_db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB:-timesheet_db}
+  #     POSTGRES_USER: ${POSTGRES_USER:-timesheet_user}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_HOST_AUTH_METHOD: trust
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #     - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+  #   networks:
+  #     - timesheet_network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-timesheet_user} -d ${POSTGRES_DB:-timesheet_db}"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: timesheet_backend
+    restart: unless-stopped
+    ports:
+      - "8130:8001"  # External port 8130 to avoid conflicts
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-timesheet_user}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-host.docker.internal}:5432/${POSTGRES_DB:-timesheet_db}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      ENVIRONMENT: production
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./app:/app/app:ro
+    networks:
+      - timesheet_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend with Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: timesheet_frontend
+    restart: unless-stopped
+    ports:
+      - "3020:80"  # External port 3020 to avoid conflicts with goodconn (3010)
+    networks:
+      - timesheet_network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: timesheet_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - timesheet_network
+    depends_on:
+      - frontend
+      - backend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot:latest
+    container_name: timesheet_certbot
+    volumes:
+      - ./nginx/ssl:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${SSL_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN}
+    depends_on:
+      - nginx
+
+volumes:
+  # postgres_data:  # Not needed since using external PostgreSQL
+  #   driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  timesheet_network:
+    driver: bridge

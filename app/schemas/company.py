@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from decimal import Decimal
+from datetime import time
 
 # Schema for request body on creation
 class CompanyCreate(BaseModel):
@@ -13,6 +14,11 @@ class CompanyCreate(BaseModel):
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
+    # 工作時間設定
+    work_start_time: Optional[time] = None
+    work_end_time: Optional[time] = None
+    late_tolerance_minutes: Optional[int] = 5
+    early_leave_tolerance_minutes: Optional[int] = 0
 
 # Schema for request body on update
 class CompanyUpdate(BaseModel):
@@ -25,6 +31,11 @@ class CompanyUpdate(BaseModel):
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
+    # 工作時間設定
+    work_start_time: Optional[time] = None
+    work_end_time: Optional[time] = None
+    late_tolerance_minutes: Optional[int] = None
+    early_leave_tolerance_minutes: Optional[int] = None
 
 # Schema for response body
 class Company(BaseModel):
@@ -40,3 +51,24 @@ class Company(BaseModel):
     contact_person: Optional[str] = None
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
+    # 工作時間設定
+    work_start_time: Optional[time] = None
+    work_end_time: Optional[time] = None
+    late_tolerance_minutes: Optional[int] = None
+    early_leave_tolerance_minutes: Optional[int] = None
+
+
+# 專門用於工作時間設定的Schema
+class WorkScheduleUpdate(BaseModel):
+    work_start_time: time
+    work_end_time: time
+    late_tolerance_minutes: int = 5
+    early_leave_tolerance_minutes: int = 0
+
+class WorkSchedule(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    work_start_time: Optional[time] = None
+    work_end_time: Optional[time] = None
+    late_tolerance_minutes: Optional[int] = None
+    early_leave_tolerance_minutes: Optional[int] = None

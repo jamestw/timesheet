@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Building, Users, Briefcase, UserCheck } from 'lucide-react'; // Added icons
+import { LogOut, LayoutDashboard, Building, Users, Briefcase, UserCheck, Calendar, BarChart3 } from 'lucide-react'; // Added icons
 import Companies from './admin/Companies';
 import Departments from './admin/Departments';
 import UsersComponent from './admin/Users'; // Renamed to avoid conflict
 import Attendance from './admin/Attendance';
 import UserApproval from './admin/UserApproval';
+import LeaveManagement from './admin/LeaveManagement';
+import Reports from './admin/Reports';
 import { Button } from '@/components/components/ui/button';
 import api from '../services/api';
 
-type AdminPage = 'companies' | 'departments' | 'users' | 'attendance' | 'approval';
+type AdminPage = 'companies' | 'departments' | 'users' | 'attendance' | 'approval' | 'leaves' | 'reports';
 
 interface CurrentUser {
   email: string;
@@ -25,7 +27,7 @@ const Admin: React.FC = () => {
 
   // Determine current page from URL parameter
   const getCurrentPage = (): AdminPage => {
-    if (section && ['companies', 'departments', 'users', 'attendance', 'approval'].includes(section)) {
+    if (section && ['companies', 'departments', 'users', 'attendance', 'approval', 'leaves', 'reports'].includes(section)) {
       return section as AdminPage;
     }
     // Default based on user role if no valid section in URL
@@ -88,6 +90,10 @@ const Admin: React.FC = () => {
         return <Attendance />;
       case 'approval':
         return <UserApproval />;
+      case 'leaves':
+        return <LeaveManagement />;
+      case 'reports':
+        return <Reports />;
       default:
         // Default to a safe page based on role
         return currentUser?.role === 'super_admin' ? <Companies /> : <UsersComponent />;
@@ -160,6 +166,20 @@ const Admin: React.FC = () => {
                 currentPage={page}
                 setPage={handlePageChange}
               />
+              <NavItem
+                icon={<Calendar className="w-5 h-5" />}
+                label="請假管理"
+                page="leaves"
+                currentPage={page}
+                setPage={handlePageChange}
+              />
+              <NavItem
+                icon={<BarChart3 className="w-5 h-5" />}
+                label="報表管理"
+                page="reports"
+                currentPage={page}
+                setPage={handlePageChange}
+              />
             </div>
           </div>
         </nav>
@@ -205,14 +225,18 @@ const Admin: React.FC = () => {
                  page === 'departments' ? '部門管理' :
                  page === 'users' ? '使用者管理' :
                  page === 'attendance' ? '打卡紀錄' :
-                 page === 'approval' ? '用戶審核' : '管理面板'}
+                 page === 'approval' ? '用戶審核' :
+                 page === 'leaves' ? '請假管理' :
+                 page === 'reports' ? '報表管理' : '管理面板'}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {page === 'companies' ? '管理系統中的所有公司資訊' :
                  page === 'departments' ? '管理公司部門結構' :
                  page === 'users' ? '管理系統使用者帳號' :
                  page === 'attendance' ? '查看員工打卡記錄' :
-                 page === 'approval' ? '審核員工註冊申請' : '選擇要管理的功能'}
+                 page === 'approval' ? '審核員工註冊申請' :
+                 page === 'leaves' ? '審核員工請假申請' :
+                 page === 'reports' ? '查看員工出勤統計和個人記錄表' : '選擇要管理的功能'}
               </p>
             </div>
           </div>

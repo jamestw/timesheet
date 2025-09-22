@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.api.routers import companies, departments, users, login, attendance, register
+from app.api.routers import companies, departments, users, login, attendance, register, leaves, reports
 from app.core.config import settings
 
 app = FastAPI(title="Timesheet System API", version="1.0.0")
@@ -12,8 +12,12 @@ origins = [
     "http://localhost",
     "http://localhost:5173", # Vite default port
     "http://localhost:5174", # Alternative Vite port
+    "http://localhost:5175", # Additional Vite port
+    "http://localhost:5177", # Current Vite port
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
+    "http://127.0.0.1:5177",
     # Production origins (will be added dynamically based on environment)
 ]
 
@@ -50,6 +54,8 @@ app.include_router(companies.router, prefix="/api/v1/companies", tags=["companie
 app.include_router(departments.router, prefix="/api/v1/companies/{company_id}/departments", tags=["departments"])
 app.include_router(users.router, prefix="/api/v1/companies/{company_id}/users", tags=["users"])
 app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["attendance"])
+app.include_router(leaves.router, prefix="/api/v1/leaves", tags=["leaves"])
+app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 
 if __name__ == "__main__":
     print(f"Starting Timesheet System API...")

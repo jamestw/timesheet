@@ -1,6 +1,30 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1';
+// 自動檢測開發/生產環境
+const getApiBaseUrl = () => {
+  // 如果有明確設定環境變數，優先使用
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // 根據當前域名自動判斷
+  const hostname = window.location.hostname;
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    // 本機開發環境
+    return 'http://localhost:8001/api/v1';
+  } else if (hostname.includes('timesheet.aerocars.cc')) {
+    // 正式環境
+    return 'https://timesheet.aerocars.cc/api/v1';
+  } else {
+    // 預設為本機
+    return 'http://localhost:8001/api/v1';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,

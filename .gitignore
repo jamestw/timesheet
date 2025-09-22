@@ -68,4 +68,6 @@ ui-debug.log
 
 # Backup files
 *.backup
-*.bak
+*.bak*.tar.gz
+*.zip
+timesheet_deploy.*

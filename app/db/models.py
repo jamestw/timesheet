@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, DECIMAL, Date
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum, Boolean, DECIMAL, Date, Time
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -24,6 +24,8 @@ class UserStatus(str, enum.Enum):
 class AttendanceType(str, enum.Enum):
     check_in = "check_in"
     check_out = "check_out"
+    overtime_start = "overtime_start"
+    overtime_end = "overtime_end"
 
 class AttendanceStatus(str, enum.Enum):
     normal = "normal"
@@ -33,12 +35,28 @@ class AttendanceStatus(str, enum.Enum):
     missing_check_out = "missing_check_out"
     out_of_range = "out_of_range"
 
+class LeaveType(str, enum.Enum):
+    sick_leave = "sick_leave"        # 病假
+    personal_leave = "personal_leave"  # 事假
+    annual_leave = "annual_leave"    # 年假
+    maternity_leave = "maternity_leave"  # 產假
+    paternity_leave = "paternity_leave"  # 陪產假
+    marriage_leave = "marriage_leave"    # 婚假
+    bereavement_leave = "bereavement_leave"  # 喪假
+    other = "other"                  # 其他
+
+class LeaveStatus(str, enum.Enum):
+    pending = "pending"      # 待審核
+    approved = "approved"    # 已核准
+    rejected = "rejected"    # 已拒絕
+    cancelled = "cancelled"  # 已取消
+
 class Company(Base):
     __tablename__ = 'companies'
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    tax_id = Column(String, unique=True, index=True, nullable=False)  # 統一編號
+    tax_id = Column(String, unique=True, index=True, nullable=True)  # 統一編號
     address = Column(String)
     latitude = Column(DECIMAL(10, 8))
     longitude = Column(DECIMAL(11, 8))
@@ -48,6 +66,13 @@ class Company(Base):
     contact_email = Column(String)
     contact_phone = Column(String)
     logo_url = Column(String)
+
+    # 工作時間設定
+    work_start_time = Column(Time, default='09:00:00')  # 上班時間
+    work_end_time = Column(Time, default='18:00:00')    # 下班時間
+    late_tolerance_minutes = Column(Integer, default=5)  # 遲到容忍時間(分鐘)
+    early_leave_tolerance_minutes = Column(Integer, default=0)  # 早退容忍時間(分鐘)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -55,6 +80,7 @@ class Company(Base):
     departments = relationship("Department", back_populates="company")
     users = relationship("User", back_populates="company", foreign_keys="[User.company_id]")
     attendance_records = relationship("AttendanceRecord", back_populates="company")
+    leave_applications = relationship("LeaveApplication", back_populates="company")
 
 
 class Department(Base):
@@ -117,6 +143,7 @@ class User(Base):
     company = relationship("Company", back_populates="users", foreign_keys=[company_id])
     department = relationship("Department", back_populates="users", foreign_keys=[department_id])
     attendance_records = relationship("AttendanceRecord", back_populates="user")
+    leave_applications = relationship("LeaveApplication", back_populates="user", foreign_keys="[LeaveApplication.user_id]")
 
 
 class AttendanceRecord(Base):
@@ -137,3 +164,29 @@ class AttendanceRecord(Base):
     # Relationships
     user = relationship("User", back_populates="attendance_records")
     company = relationship("Company", back_populates="attendance_records")
+
+
+class LeaveApplication(Base):
+    __tablename__ = 'leave_applications'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    company_id = Column(Integer, ForeignKey('companies.id', ondelete='CASCADE'), nullable=False)
+    leave_type = Column(Enum(LeaveType), nullable=False)
+    start_date = Column(DateTime(timezone=True), nullable=False)
+    end_date = Column(DateTime(timezone=True), nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column(Enum(LeaveStatus), default=LeaveStatus.pending)
+
+    # 審核相關
+    reviewed_by = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    review_comment = Column(String)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User", back_populates="leave_applications", foreign_keys=[user_id])
+    company = relationship("Company", back_populates="leave_applications")
+    reviewer = relationship("User", foreign_keys=[reviewed_by])

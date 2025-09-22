@@ -29,13 +29,39 @@ if ! ssh -o ConnectTimeout=10 "$VPS_HOST" "echo 'SSH connection successful'" 2>/
 fi
 
 echo "📁 Syncing application code to VPS..."
-# Exclude node_modules, dist, and other unnecessary files
-rsync -avz --exclude='frontend/node_modules/' \
-           --exclude='frontend/dist/' \
-           --exclude='.git/' \
-           --exclude='*.log' \
-           --exclude='__pycache__/' \
-           ./ "$VPS_HOST:$VPS_PATH/"
+
+# Check if rsync is available
+if command -v rsync >/dev/null 2>&1; then
+    echo "🚀 Using rsync for efficient sync..."
+    # Exclude node_modules, dist, and other unnecessary files
+    rsync -avz --exclude='frontend/node_modules/' \
+               --exclude='frontend/dist/' \
+               --exclude='.git/' \
+               --exclude='*.log' \
+               --exclude='__pycache__/' \
+               ./ "$VPS_HOST:$VPS_PATH/"
+else
+    echo "📦 rsync not found, using tar+scp method..."
+    # Create temporary archive and transfer to VPS
+    echo "📦 Creating deployment archive..."
+    tar -czf timesheet_deploy.tar.gz \
+        --exclude='frontend/node_modules' \
+        --exclude='frontend/dist' \
+        --exclude='.git' \
+        --exclude='*.log' \
+        --exclude='__pycache__' \
+        --exclude='timesheet_deploy.tar.gz' \
+        .
+
+    echo "⬆️ Uploading to VPS..."
+    scp timesheet_deploy.tar.gz "$VPS_HOST:$VPS_PATH/"
+
+    echo "📂 Extracting on VPS..."
+    ssh "$VPS_HOST" "cd $VPS_PATH && tar -xzf timesheet_deploy.tar.gz && rm timesheet_deploy.tar.gz"
+
+    echo "🧹 Cleaning up local archive..."
+    rm timesheet_deploy.tar.gz
+fi
 
 echo "🐳 Building and deploying backend container..."
 ssh "$VPS_HOST" "cd $VPS_PATH && {

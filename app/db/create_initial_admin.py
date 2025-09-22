@@ -35,9 +35,12 @@ def create_initial_admin_user():
         admin_user = User(
             username=admin_username,
             email=admin_username,
-            password_hash=hashed_password,
+            hashed_password=hashed_password,
             role=UserRole.company_admin,
-            company_id=company.id
+            company_id=company.id,
+            first_name="Admin",
+            last_name="User",
+            is_active=True
         )
         db.add(admin_user)
         db.commit()
@@ -58,9 +61,12 @@ def create_initial_admin_user():
         super_admin_user = User(
             username=super_admin_username,
             email=super_admin_username,
-            password_hash=hashed_password,
+            hashed_password=hashed_password,
             role=UserRole.super_admin,
-            company_id=company.id # Super admin is also associated with a company, but can access all
+            company_id=company.id,  # Super admin is also associated with a company, but can access all
+            first_name="Super",
+            last_name="Admin",
+            is_active=True
         )
         db.add(super_admin_user)
         db.commit()

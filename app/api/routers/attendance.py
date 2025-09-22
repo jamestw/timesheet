@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload # Import joinedload
 from typing import Any, List
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 from app.api import deps
 from app.db.models import AttendanceRecord, AttendanceType, AttendanceStatus, User, Company
@@ -10,6 +10,51 @@ from app.db import models # Import models
 from app.utils.geolocation import is_within_range
 
 router = APIRouter()
+
+def determine_attendance_status(
+    company: Company,
+    attendance_type: AttendanceType,
+    current_time: datetime
+) -> AttendanceStatus:
+    """
+    根據公司工作時間設定判斷考勤狀態
+    """
+    if not company.work_start_time or not company.work_end_time:
+        return AttendanceStatus.normal
+
+    current_time_only = current_time.time()
+
+    if attendance_type == AttendanceType.check_in:
+        # 計算允許的最晚上班時間
+        work_start = company.work_start_time
+        late_tolerance = company.late_tolerance_minutes or 0
+
+        # 將時間轉換為分鐘進行計算
+        work_start_minutes = work_start.hour * 60 + work_start.minute
+        current_minutes = current_time_only.hour * 60 + current_time_only.minute
+        allowed_late_minutes = work_start_minutes + late_tolerance
+
+        if current_minutes > allowed_late_minutes:
+            return AttendanceStatus.late
+        else:
+            return AttendanceStatus.normal
+
+    elif attendance_type == AttendanceType.check_out:
+        # 計算允許的最早下班時間
+        work_end = company.work_end_time
+        early_tolerance = company.early_leave_tolerance_minutes or 0
+
+        # 將時間轉換為分鐘進行計算
+        work_end_minutes = work_end.hour * 60 + work_end.minute
+        current_minutes = current_time_only.hour * 60 + current_time_only.minute
+        allowed_early_minutes = work_end_minutes - early_tolerance
+
+        if current_minutes < allowed_early_minutes:
+            return AttendanceStatus.early_leave
+        else:
+            return AttendanceStatus.normal
+
+    return AttendanceStatus.normal
 
 @router.post("/check-in", response_model=dict)
 def check_in(
@@ -42,7 +87,7 @@ def check_in(
     if not is_valid_location:
         raise HTTPException(
             status_code=403,
-            detail=f"You are {distance:.1f}m away from the company location. Please check-in within {distance_limit:.0f}m of the office."
+            detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
     # Check if already checked in today
@@ -53,26 +98,43 @@ def check_in(
     ).first()
 
     if today_check_in:
-        raise HTTPException(status_code=400, detail="Already checked in today.")
+        raise HTTPException(status_code=400, detail="今日已經上班打卡。")
+
+    # Determine attendance status based on work schedule
+    current_time = datetime.now()
+    attendance_status = determine_attendance_status(
+        company=company,
+        attendance_type=AttendanceType.check_in,
+        current_time=current_time
+    )
 
     # Create attendance record
     attendance_record = AttendanceRecord(
         user_id=current_user.id,
         company_id=current_user.company_id,
-        record_time=datetime.now(),
+        record_time=current_time,
         record_type=AttendanceType.check_in,
         latitude=user_latitude,
         longitude=user_longitude,
-        status=AttendanceStatus.normal
+        status=attendance_status
     )
     db.add(attendance_record)
     db.commit()
     db.refresh(attendance_record)
 
+    # 構建狀態消息
+    status_message = "上班打卡成功"
+    if attendance_status == AttendanceStatus.late:
+        status_message = "上班打卡成功（遲到）"
+    elif attendance_status == AttendanceStatus.normal:
+        status_message = "上班打卡成功（準時）"
+
     return {
-        "message": "Check-in successful",
+        "message": status_message,
         "record_id": attendance_record.id,
-        "distance_from_company": round(distance, 1)
+        "distance_from_company": round(distance, 1),
+        "status": attendance_status.value,
+        "record_time": current_time.isoformat()
     }
 
 @router.post("/check-out", response_model=dict)
@@ -106,7 +168,7 @@ def check_out(
     if not is_valid_location:
         raise HTTPException(
             status_code=403,
-            detail=f"You are {distance:.1f}m away from the company location. Please check-out within {distance_limit:.0f}m of the office."
+            detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
     # Check if already checked out today
@@ -117,26 +179,43 @@ def check_out(
     ).first()
 
     if today_check_out:
-        raise HTTPException(status_code=400, detail="Already checked out today.")
+        raise HTTPException(status_code=400, detail="今日已經下班打卡。")
+
+    # Determine attendance status based on work schedule
+    current_time = datetime.now()
+    attendance_status = determine_attendance_status(
+        company=company,
+        attendance_type=AttendanceType.check_out,
+        current_time=current_time
+    )
 
     # Create attendance record
     attendance_record = AttendanceRecord(
         user_id=current_user.id,
         company_id=current_user.company_id,
-        record_time=datetime.now(),
+        record_time=current_time,
         record_type=AttendanceType.check_out,
         latitude=user_latitude,
         longitude=user_longitude,
-        status=AttendanceStatus.normal
+        status=attendance_status
     )
     db.add(attendance_record)
     db.commit()
     db.refresh(attendance_record)
 
+    # 構建狀態消息
+    status_message = "下班打卡成功"
+    if attendance_status == AttendanceStatus.early_leave:
+        status_message = "下班打卡成功（早退）"
+    elif attendance_status == AttendanceStatus.normal:
+        status_message = "下班打卡成功（準時）"
+
     return {
-        "message": "Check-out successful",
+        "message": status_message,
         "record_id": attendance_record.id,
-        "distance_from_company": round(distance, 1)
+        "distance_from_company": round(distance, 1),
+        "status": attendance_status.value,
+        "record_time": current_time.isoformat()
     }
 
 @router.get("/records", response_model=List[AttendanceRecordSchema])
@@ -198,3 +277,147 @@ def get_attendance_records(
 
     records = query.order_by(AttendanceRecord.record_time.desc()).offset(skip).limit(limit).all()
     return records
+
+@router.post("/overtime-start", response_model=dict)
+def overtime_start(
+    *,
+    db: Session = Depends(deps.get_db),
+    attendance_request: AttendanceRequest,
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Employee overtime start (clock-in) with location validation.
+    """
+    # Get user's location from request
+    user_latitude = attendance_request.latitude
+    user_longitude = attendance_request.longitude
+
+    # Get company location
+    company = db.query(Company).filter(Company.id == current_user.company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="找不到公司資訊")
+
+    # Validate location if company has coordinates set
+    distance_limit = float(company.attendance_distance_limit) if company.attendance_distance_limit else 100.0
+    is_valid_location, distance = is_within_range(
+        user_latitude, user_longitude,
+        float(company.latitude) if company.latitude else None,
+        float(company.longitude) if company.longitude else None,
+        max_distance=distance_limit
+    )
+
+    if not is_valid_location:
+        raise HTTPException(
+            status_code=403,
+            detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
+        )
+
+    # Check if already started overtime today
+    today_overtime_start = db.query(AttendanceRecord).filter(
+        AttendanceRecord.user_id == current_user.id,
+        AttendanceRecord.record_type == AttendanceType.overtime_start,
+        AttendanceRecord.record_time >= datetime.now().date()
+    ).first()
+
+    if today_overtime_start:
+        raise HTTPException(status_code=400, detail="今日已經開始加班打卡。")
+
+    # Create attendance record
+    current_time = datetime.now()
+    attendance_record = AttendanceRecord(
+        user_id=current_user.id,
+        company_id=current_user.company_id,
+        record_time=current_time,
+        record_type=AttendanceType.overtime_start,
+        latitude=user_latitude,
+        longitude=user_longitude,
+        status=AttendanceStatus.normal
+    )
+    db.add(attendance_record)
+    db.commit()
+    db.refresh(attendance_record)
+
+    return {
+        "message": "加班開始打卡成功",
+        "record_id": attendance_record.id,
+        "distance_from_company": round(distance, 1),
+        "status": "normal",
+        "record_time": current_time.isoformat()
+    }
+
+@router.post("/overtime-end", response_model=dict)
+def overtime_end(
+    *,
+    db: Session = Depends(deps.get_db),
+    attendance_request: AttendanceRequest,
+    current_user: User = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Employee overtime end (clock-out) with location validation.
+    """
+    # Get user's location from request
+    user_latitude = attendance_request.latitude
+    user_longitude = attendance_request.longitude
+
+    # Get company location
+    company = db.query(Company).filter(Company.id == current_user.company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="找不到公司資訊")
+
+    # Validate location if company has coordinates set
+    distance_limit = float(company.attendance_distance_limit) if company.attendance_distance_limit else 100.0
+    is_valid_location, distance = is_within_range(
+        user_latitude, user_longitude,
+        float(company.latitude) if company.latitude else None,
+        float(company.longitude) if company.longitude else None,
+        max_distance=distance_limit
+    )
+
+    if not is_valid_location:
+        raise HTTPException(
+            status_code=403,
+            detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
+        )
+
+    # Check if overtime started today
+    today_overtime_start = db.query(AttendanceRecord).filter(
+        AttendanceRecord.user_id == current_user.id,
+        AttendanceRecord.record_type == AttendanceType.overtime_start,
+        AttendanceRecord.record_time >= datetime.now().date()
+    ).first()
+
+    if not today_overtime_start:
+        raise HTTPException(status_code=400, detail="今日尚未開始加班，無法結束加班。")
+
+    # Check if already ended overtime today
+    today_overtime_end = db.query(AttendanceRecord).filter(
+        AttendanceRecord.user_id == current_user.id,
+        AttendanceRecord.record_type == AttendanceType.overtime_end,
+        AttendanceRecord.record_time >= datetime.now().date()
+    ).first()
+
+    if today_overtime_end:
+        raise HTTPException(status_code=400, detail="今日已經結束加班打卡。")
+
+    # Create attendance record
+    current_time = datetime.now()
+    attendance_record = AttendanceRecord(
+        user_id=current_user.id,
+        company_id=current_user.company_id,
+        record_time=current_time,
+        record_type=AttendanceType.overtime_end,
+        latitude=user_latitude,
+        longitude=user_longitude,
+        status=AttendanceStatus.normal
+    )
+    db.add(attendance_record)
+    db.commit()
+    db.refresh(attendance_record)
+
+    return {
+        "message": "加班結束打卡成功",
+        "record_id": attendance_record.id,
+        "distance_from_company": round(distance, 1),
+        "status": "normal",
+        "record_time": current_time.isoformat()
+    }

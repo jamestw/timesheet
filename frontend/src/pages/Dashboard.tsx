@@ -35,11 +35,12 @@ import BottomNavigation from '../components/BottomNavigation';
 interface AttendanceRecord {
   id: number;
   record_time: string;
-  record_type: 'check_in' | 'check_out' | 'other';
+  record_type: 'check_in' | 'check_out' | 'overtime_start' | 'overtime_end' | 'other';
   status: string;
 }
 
-type AttendanceType = 'check-in' | 'check-out' | 'other';
+type AttendanceType = 'check-in' | 'check-out' | 'overtime';
+type OvertimeType = 'start' | 'end';
 
 
 const Dashboard: React.FC = () => {
@@ -50,6 +51,7 @@ const Dashboard: React.FC = () => {
     const currentHour = new Date().getHours();
     return currentHour < 12 ? 'check-in' : 'check-out';
   });
+  const [overtimeType, setOvertimeType] = useState<OvertimeType>('start');
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,6 +159,22 @@ const Dashboard: React.FC = () => {
           text: `${response.data.message || `${attendanceType} successful.`} 距離公司: ${response.data.distance_from_company}m`
         });
         fetchTodayAttendanceRecords(); // Refresh records after action
+      } else if (attendanceType === 'overtime') {
+        // Handle overtime attendance
+        setMessage({ type: 'success', text: '正在取得位置資訊...' });
+        const location = await getCurrentLocation();
+
+        const endpoint = overtimeType === 'start' ? '/attendance/overtime-start' : '/attendance/overtime-end';
+        const response = await api.post(endpoint, {
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
+
+        setMessage({
+          type: 'success',
+          text: `${response.data.message || `加班${overtimeType === 'start' ? '開始' : '結束'} successful.`} 距離公司: ${response.data.distance_from_company}m`
+        });
+        fetchTodayAttendanceRecords(); // Refresh records after action
       } else {
         setMessage({ type: 'error', text: '此功能尚未實現。' });
       }
@@ -177,6 +195,8 @@ const Dashboard: React.FC = () => {
       case 'check-in': return '上班';
       case 'check_out': return '下班';
       case 'check-out': return '下班';
+      case 'overtime_start': return '加班開始';
+      case 'overtime_end': return '加班結束';
       default: return '其他';
     }
   }
@@ -242,14 +262,40 @@ const Dashboard: React.FC = () => {
               下班
             </ToggleGroupItem>
             <ToggleGroupItem
-              value="other"
-              disabled
-              className="px-6 py-2 rounded-md opacity-50 cursor-not-allowed text-gray-400"
+              value="overtime"
+              className="data-[state=on]:bg-orange-600 data-[state=on]:text-white data-[state=on]:shadow-md px-6 py-2 rounded-md transition-all text-gray-700 hover:text-gray-900"
             >
-              其他
+              加班
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
+
+        {/* Overtime Type Toggle - Show only when overtime is selected */}
+        {attendanceType === 'overtime' && (
+          <div className="mb-6">
+            <ToggleGroup
+              type="single"
+              value={overtimeType}
+              onValueChange={(value: OvertimeType) => {
+                if (value) setOvertimeType(value);
+              }}
+              className="bg-orange-50 p-1 rounded-lg border-2 border-orange-200"
+            >
+              <ToggleGroupItem
+                value="start"
+                className="data-[state=on]:bg-orange-600 data-[state=on]:text-white data-[state=on]:shadow-md px-6 py-2 rounded-md transition-all text-orange-700 hover:text-orange-900"
+              >
+                開始
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="end"
+                className="data-[state=on]:bg-orange-600 data-[state=on]:text-white data-[state=on]:shadow-md px-6 py-2 rounded-md transition-all text-orange-700 hover:text-orange-900"
+              >
+                結束
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        )}
 
         {/* Punch Button */}
         <Button
@@ -257,7 +303,9 @@ const Dashboard: React.FC = () => {
           className={`w-40 h-40 rounded-full text-lg shadow-lg hover:shadow-xl transition-all ${
             attendanceType === 'check-in'
               ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-blue-600 hover:bg-blue-700'
+              : attendanceType === 'check-out'
+              ? 'bg-blue-600 hover:bg-blue-700'
+              : 'bg-orange-600 hover:bg-orange-700'
           }`}
           onClick={handlePunch}
         >
@@ -306,7 +354,11 @@ const Dashboard: React.FC = () => {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           record.record_type === 'check_in'
                             ? 'bg-green-100 text-green-800'
-                            : 'bg-blue-100 text-blue-800'
+                            : record.record_type === 'check_out'
+                            ? 'bg-blue-100 text-blue-800'
+                            : record.record_type === 'overtime_start' || record.record_type === 'overtime_end'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-gray-100 text-gray-800'
                         }`}>
                           {getRecordTypeDisplay(record.record_type)}
                         </span>
