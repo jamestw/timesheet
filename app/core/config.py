@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./sql_app.db"
     SECRET_KEY: str = "your_12541_super_secret_key_for_dev"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480  # 8 hours
 
     # PostgreSQL Configuration
     POSTGRES_DB: Optional[str] = None

@@ -13,8 +13,11 @@ const getApiBaseUrl = () => {
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     // 本機開發環境
     return 'http://localhost:8001/api/v1';
+  } else if (hostname.includes('timesheet-5fff2.web.app') || hostname.includes('timesheet-5fff2.firebaseapp.com')) {
+    // Firebase hosting 環境，連接到 VPS
+    return 'http://185.201.8.177:8130/api/v1';
   } else if (hostname.includes('timesheet.aerocars.cc')) {
-    // 正式環境
+    // 正式環境 (如果有域名)
     return 'https://timesheet.aerocars.cc/api/v1';
   } else {
     // 預設為本機
