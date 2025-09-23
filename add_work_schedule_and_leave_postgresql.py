@@ -15,7 +15,7 @@ def get_db_connection():
     """建立PostgreSQL連接"""
     try:
         conn = psycopg2.connect(
-            host=os.getenv('POSTGRES_HOST', '185.201.8.177'),
+            host=os.getenv('POSTGRES_HOST', '172.19.0.4'),
             database=os.getenv('POSTGRES_DB', 'timesheet'),
             user=os.getenv('POSTGRES_USER', 'apiuser'),
             password=os.getenv('POSTGRES_PASSWORD', 'Devo0932'),

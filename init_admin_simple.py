@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 # Database connection
-DATABASE_URL = 'postgresql://apiuser:Devo0932@185.201.8.177:5432/timesheet'
+DATABASE_URL = 'postgresql://apiuser:Devo0932@172.19.0.4:5432/timesheet'
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

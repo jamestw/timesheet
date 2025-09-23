@@ -169,7 +169,7 @@ create_admin_user() {
         sleep 10
 
         # Create initial admin user
-        docker-compose exec -T backend python /app/create_initial_admin.py
+        docker-compose exec -T backend python create_initial_admin.py
 EOF
 
     log "Initial admin user created."

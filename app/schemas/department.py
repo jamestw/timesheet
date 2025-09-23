@@ -19,4 +19,4 @@ class DepartmentInDB(BaseModel):
     manager_id: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
