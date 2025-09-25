@@ -19,6 +19,7 @@ class CompanyCreate(BaseModel):
     work_end_time: Optional[time] = None
     late_tolerance_minutes: Optional[int] = 5
     early_leave_tolerance_minutes: Optional[int] = 0
+    is_overnight_shift: Optional[bool] = False  # 是否為跨日班別
 
 # Schema for request body on update
 class CompanyUpdate(BaseModel):
@@ -36,6 +37,7 @@ class CompanyUpdate(BaseModel):
     work_end_time: Optional[time] = None
     late_tolerance_minutes: Optional[int] = None
     early_leave_tolerance_minutes: Optional[int] = None
+    is_overnight_shift: Optional[bool] = None  # 是否為跨日班別
 
 # Schema for response body
 class Company(BaseModel):
@@ -56,6 +58,7 @@ class Company(BaseModel):
     work_end_time: Optional[time] = None
     late_tolerance_minutes: Optional[int] = None
     early_leave_tolerance_minutes: Optional[int] = None
+    is_overnight_shift: Optional[bool] = None  # 是否為跨日班別
 
 
 # 專門用於工作時間設定的Schema
@@ -64,6 +67,7 @@ class WorkScheduleUpdate(BaseModel):
     work_end_time: time
     late_tolerance_minutes: int = 5
     early_leave_tolerance_minutes: int = 0
+    is_overnight_shift: bool = False  # 是否為跨日班別
 
 class WorkSchedule(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -72,3 +76,4 @@ class WorkSchedule(BaseModel):
     work_end_time: Optional[time] = None
     late_tolerance_minutes: Optional[int] = None
     early_leave_tolerance_minutes: Optional[int] = None
+    is_overnight_shift: Optional[bool] = None  # 是否為跨日班別

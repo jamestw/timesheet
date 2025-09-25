@@ -8,7 +8,7 @@ from app.db import models
 
 router = APIRouter()
 
-@router.post("/", response_model=DepartmentInDB)
+@router.post("", response_model=DepartmentInDB)
 def create_department(
     *,
     db: Session = Depends(deps.get_db),
@@ -27,7 +27,7 @@ def create_department(
     db.refresh(db_obj)
     return db_obj
 
-@router.get("/", response_model=List[DepartmentInDB])
+@router.get("", response_model=List[DepartmentInDB])
 def read_departments(
     *,
     db: Session = Depends(deps.get_db),

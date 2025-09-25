@@ -62,7 +62,7 @@ const UserApproval: React.FC = () => {
       const companyId = userResponse.data.company_id;
 
       if (companyId) {
-        const response = await api.get(`/companies/${companyId}/departments/`);
+        const response = await api.get(`/companies/${companyId}/departments`);
         setDepartments(response.data);
       }
     } catch (error: any) {

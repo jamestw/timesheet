@@ -1,0 +1,45 @@
+# 在 VPS 上執行的修復命令
+# SSH 到 VPS: ssh root@185.201.8.177
+
+# 1. 進入專案目錄
+cd /home/docker/timesheet
+
+# 2. 檢查當前的 .env 檔案
+echo "=== 當前 .env 檔案內容 ==="
+cat .env | grep DATABASE_URL
+
+# 3. 修復 .env 檔案中的資料庫連線
+echo "=== 修復資料庫連線設定 ==="
+sed -i 's/DATABASE_URL=postgresql:\/\/apiuser:Devo0932@185.201.8.177:5432\/timesheet/DATABASE_URL=postgresql:\/\/apiuser:Devo0932@172.19.0.4:5432\/timesheet/g' .env
+
+# 4. 確認修改結果
+echo "=== 修改後的 .env 檔案 ==="
+cat .env | grep DATABASE_URL
+
+# 5. 完全重啟 Docker 容器
+echo "=== 停止容器 ==="
+docker-compose down --remove-orphans
+
+# 6. 清除 Docker 快取
+echo "=== 清除快取 ==="
+docker system prune -f
+
+# 7. 重新啟動容器
+echo "=== 重新啟動容器 ==="
+docker-compose up --build -d
+
+# 8. 等待服務啟動
+echo "=== 等待服務啟動 ==="
+sleep 20
+
+# 9. 檢查容器狀態
+echo "=== 檢查容器狀態 ==="
+docker-compose ps
+
+# 10. 檢查後端日誌
+echo "=== 檢查後端日誌 ==="
+docker-compose logs backend | tail -10
+
+# 11. 測試 API
+echo "=== 測試 API ==="
+curl -X GET http://localhost:8130/health

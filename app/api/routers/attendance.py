@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload # Import joinedload
 from typing import Any, List
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 
 from app.api import deps
 from app.db.models import AttendanceRecord, AttendanceType, AttendanceStatus, User, Company
@@ -10,6 +10,41 @@ from app.db import models # Import models
 from app.utils.geolocation import is_within_range
 
 router = APIRouter()
+
+def get_work_day_range(company: Company, current_time: datetime):
+    """
+    根據公司班別設定取得工作日的時間範圍
+    對於跨日班別，需要特殊處理
+    """
+    if not company.is_overnight_shift:
+        # 一般班別：當日 00:00 - 23:59
+        day_start = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = current_time.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return day_start, day_end
+
+    # 跨日班別邏輯
+    work_start = company.work_start_time
+    work_end = company.work_end_time
+
+    if not work_start or not work_end:
+        # 如果沒有設定工作時間，使用預設邏輯
+        day_start = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = current_time.replace(hour=23, minute=59, second=59, microsecond=999999)
+        return day_start, day_end
+
+    current_time_only = current_time.time()
+
+    # 判斷當前時間是在工作日的哪一部分
+    if current_time_only >= work_start:  # 例如：現在是 23:30，工作開始時間是 23:00
+        # 在工作日的開始部分 (今天23:00 - 明天06:00)
+        day_start = current_time.replace(hour=work_start.hour, minute=work_start.minute, second=0, microsecond=0)
+        day_end = (current_time + timedelta(days=1)).replace(hour=work_end.hour, minute=work_end.minute, second=59, microsecond=999999)
+    else:  # 例如：現在是 05:30，工作結束時間是 06:00
+        # 在工作日的結束部分 (昨天23:00 - 今天06:00)
+        day_start = (current_time - timedelta(days=1)).replace(hour=work_start.hour, minute=work_start.minute, second=0, microsecond=0)
+        day_end = current_time.replace(hour=work_end.hour, minute=work_end.minute, second=59, microsecond=999999)
+
+    return day_start, day_end
 
 def determine_attendance_status(
     company: Company,
@@ -90,18 +125,21 @@ def check_in(
             detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
-    # Check if already checked in today
+    # Check if already checked in today (考慮跨日班別)
+    current_time = datetime.now()
+    work_day_start, work_day_end = get_work_day_range(company, current_time)
+
     today_check_in = db.query(AttendanceRecord).filter(
         AttendanceRecord.user_id == current_user.id,
         AttendanceRecord.record_type == AttendanceType.check_in,
-        AttendanceRecord.record_time >= datetime.now().date()
+        AttendanceRecord.record_time >= work_day_start,
+        AttendanceRecord.record_time <= work_day_end
     ).first()
 
     if today_check_in:
         raise HTTPException(status_code=400, detail="今日已經上班打卡。")
 
     # Determine attendance status based on work schedule
-    current_time = datetime.now()
     attendance_status = determine_attendance_status(
         company=company,
         attendance_type=AttendanceType.check_in,
@@ -171,18 +209,21 @@ def check_out(
             detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
-    # Check if already checked out today
+    # Check if already checked out today (考慮跨日班別)
+    current_time = datetime.now()
+    work_day_start, work_day_end = get_work_day_range(company, current_time)
+
     today_check_out = db.query(AttendanceRecord).filter(
         AttendanceRecord.user_id == current_user.id,
         AttendanceRecord.record_type == AttendanceType.check_out,
-        AttendanceRecord.record_time >= datetime.now().date()
+        AttendanceRecord.record_time >= work_day_start,
+        AttendanceRecord.record_time <= work_day_end
     ).first()
 
     if today_check_out:
         raise HTTPException(status_code=400, detail="今日已經下班打卡。")
 
     # Determine attendance status based on work schedule
-    current_time = datetime.now()
     attendance_status = determine_attendance_status(
         company=company,
         attendance_type=AttendanceType.check_out,
@@ -312,11 +353,15 @@ def overtime_start(
             detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
-    # Check if already started overtime today
+    # Check if already started overtime today (考慮跨日班別)
+    current_time = datetime.now()
+    work_day_start, work_day_end = get_work_day_range(company, current_time)
+
     today_overtime_start = db.query(AttendanceRecord).filter(
         AttendanceRecord.user_id == current_user.id,
         AttendanceRecord.record_type == AttendanceType.overtime_start,
-        AttendanceRecord.record_time >= datetime.now().date()
+        AttendanceRecord.record_time >= work_day_start,
+        AttendanceRecord.record_time <= work_day_end
     ).first()
 
     if today_overtime_start:
@@ -379,11 +424,15 @@ def overtime_end(
             detail=f"您距離公司位置{distance:.1f}公尺。請在距離辦公室{distance_limit:.0f}公尺範圍內打卡。"
         )
 
-    # Check if overtime started today
+    # Check if overtime started today (考慮跨日班別)
+    current_time = datetime.now()
+    work_day_start, work_day_end = get_work_day_range(company, current_time)
+
     today_overtime_start = db.query(AttendanceRecord).filter(
         AttendanceRecord.user_id == current_user.id,
         AttendanceRecord.record_type == AttendanceType.overtime_start,
-        AttendanceRecord.record_time >= datetime.now().date()
+        AttendanceRecord.record_time >= work_day_start,
+        AttendanceRecord.record_time <= work_day_end
     ).first()
 
     if not today_overtime_start:
@@ -393,14 +442,14 @@ def overtime_end(
     today_overtime_end = db.query(AttendanceRecord).filter(
         AttendanceRecord.user_id == current_user.id,
         AttendanceRecord.record_type == AttendanceType.overtime_end,
-        AttendanceRecord.record_time >= datetime.now().date()
+        AttendanceRecord.record_time >= work_day_start,
+        AttendanceRecord.record_time <= work_day_end
     ).first()
 
     if today_overtime_end:
         raise HTTPException(status_code=400, detail="今日已經結束加班打卡。")
 
     # Create attendance record
-    current_time = datetime.now()
     attendance_record = AttendanceRecord(
         user_id=current_user.id,
         company_id=current_user.company_id,

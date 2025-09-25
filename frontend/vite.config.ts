@@ -13,6 +13,9 @@ export default defineConfig({
       injectRegister: 'auto',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Force service worker update
+        skipWaiting: true,
+        clientsClaim: true,
       },
       devOptions: {
         enabled: true,

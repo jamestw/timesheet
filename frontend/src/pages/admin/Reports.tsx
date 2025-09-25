@@ -78,8 +78,11 @@ interface Company {
 
 interface User {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
   email: string;
+  // 用於顯示的完整姓名
+  name?: string;
 }
 
 const Reports: React.FC = () => {
@@ -107,9 +110,15 @@ const Reports: React.FC = () => {
       fetchCompanies();
       // Auto-load monthly summary for company_admin
       if (currentUser.role === 'company_admin') {
-        setSelectedCompany(currentUser.company_id.toString());
+        const companyId = currentUser.company_id.toString();
+        setSelectedCompany(companyId);
         // Auto-fetch monthly summary when component loads for company_admin
         fetchMonthlySummaryForCompany(currentUser.company_id);
+
+        // 立即觸發用戶列表載入
+        setTimeout(() => {
+          fetchUsersForCompany(companyId);
+        }, 100);
       }
     }
   }, [currentUser]);
@@ -134,6 +143,7 @@ const Reports: React.FC = () => {
   const fetchCurrentUser = async () => {
     try {
       const response = await api.get('/users/me');
+      console.log('Current user loaded:', response.data);
       setCurrentUser(response.data);
     } catch (error) {
       console.error('Failed to fetch current user:', error);
@@ -154,15 +164,26 @@ const Reports: React.FC = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    if (!selectedCompany) return;
+  const fetchUsersForCompany = async (companyId: string) => {
+    if (!companyId) return;
 
     try {
-      const response = await api.get(`/companies/${selectedCompany}/users`);
-      setUsers(response.data);
+      const response = await api.get(`/companies/${companyId}/users`);
+      const usersWithName = response.data.map((user: User) => ({
+        ...user,
+        name: `${user.first_name} ${user.last_name}`.trim()
+      }));
+      setUsers(usersWithName);
+      console.log('Fetched users for company', companyId, ':', usersWithName);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setError('無法載入員工列表');
     }
+  };
+
+  const fetchUsers = async () => {
+    if (!selectedCompany) return;
+    await fetchUsersForCompany(selectedCompany);
   };
 
   const fetchMonthlySummaryForCompany = async (companyId: number) => {
@@ -459,14 +480,24 @@ const Reports: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">選擇員工</label>
                 <Select value={selectedUser} onValueChange={setSelectedUser}>
                   <SelectTrigger className="max-w-md">
-                    <SelectValue placeholder="請先選擇公司，再選擇員工" />
+                    <SelectValue placeholder={
+                      users.length === 0
+                        ? "請先選擇公司，載入員工列表..."
+                        : "請選擇員工"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.name} ({user.email})
+                    {users.length === 0 ? (
+                      <SelectItem value="_loading" disabled>
+                        {selectedCompany ? "載入員工列表中..." : "請先選擇公司"}
                       </SelectItem>
-                    ))}
+                    ) : (
+                      users.map(user => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim()} ({user.email})
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

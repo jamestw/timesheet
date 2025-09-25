@@ -33,7 +33,10 @@ echo "📦 Installing/updating dependencies..."
 npm install
 
 echo "🛠️  Building for production..."
-npm run build
+# Clean any existing build
+rm -rf dist
+# Build with production mode explicitly
+npm run build:production
 
 # Check if build was successful
 if [ ! -d "dist" ]; then

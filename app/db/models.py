@@ -73,6 +73,9 @@ class Company(Base):
     late_tolerance_minutes = Column(Integer, default=5)  # 遲到容忍時間(分鐘)
     early_leave_tolerance_minutes = Column(Integer, default=0)  # 早退容忍時間(分鐘)
 
+    # 跨日班別設定
+    is_overnight_shift = Column(Boolean, default=False)  # 是否為跨日班別 (如大夜班23:00-06:00)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

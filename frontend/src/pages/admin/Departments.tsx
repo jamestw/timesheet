@@ -65,7 +65,7 @@ const Departments: React.FC = () => {
   const fetchDepartments = useCallback(async (companyId: string) => {
     setIsLoading(true);
     try {
-      const response = await api.get(`/companies/${companyId}/departments/`);
+      const response = await api.get(`/companies/${companyId}/departments`);
       setDepartments(response.data);
     } catch (error) {
       console.error('Failed to fetch departments:', error);
@@ -87,7 +87,7 @@ const Departments: React.FC = () => {
   const handleAddDepartment = async () => {
     if (!selectedCompany) return;
     try {
-      await api.post(`/companies/${selectedCompany}/departments/`, newDepartment);
+      await api.post(`/companies/${selectedCompany}/departments`, newDepartment);
       setIsDialogOpen(false);
       fetchDepartments(selectedCompany);
     } catch (error) {

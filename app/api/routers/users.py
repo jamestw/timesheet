@@ -9,7 +9,7 @@ from app.core.security import get_password_hash
 
 router = APIRouter()
 
-@router.post("/", response_model=User)
+@router.post("", response_model=User)
 def create_user(
     *,
     db: Session = Depends(deps.get_db),
@@ -43,7 +43,7 @@ def create_user(
     db.refresh(db_obj)
     return db_obj
 
-@router.get("/", response_model=List[User])
+@router.get("", response_model=List[User])
 def read_users(
     *,
     db: Session = Depends(deps.get_db),

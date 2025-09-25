@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { tokenManager, tokenAutoRefresh } from '../services/api';
 import { useUser } from '../contexts/UserContext';
 
 // Assuming shadcn/ui components are available
@@ -35,11 +35,17 @@ const Login: React.FC = () => {
         }
       );
       console.log('Login successful, response:', response.data);
-      localStorage.setItem('access_token', response.data.access_token);
+      // 重置手動登出標記並儲存tokens
+      tokenManager.setManualLogout(false);
+      tokenManager.setTokens(response.data.access_token, response.data.refresh_token);
 
       // Refresh user data after successful login
       console.log('Login: Calling refreshUser to update UserContext');
       await refreshUser();
+
+      // 啟動自動token更新機制
+      tokenAutoRefresh.start();
+      console.log('Token自動更新機制已啟動');
 
       navigate('/dashboard');
     } catch (err: any) {

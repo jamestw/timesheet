@@ -200,8 +200,8 @@ const Register: React.FC = () => {
             {/* 帳號資訊 */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">帳號資訊</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
+              <div className="space-y-4">
+                <div>
                   <Label htmlFor="email">電子郵件 <span className="text-red-500">*</span></Label>
                   <Input
                     id="email"
@@ -213,27 +213,30 @@ const Register: React.FC = () => {
                   />
                   <p className="text-xs text-gray-500 mt-1">使用者名稱將自動產生</p>
                 </div>
-                <div>
-                  <Label htmlFor="password">密碼 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => handleChange('password', e.target.value)}
-                    placeholder="請輸入密碼"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="confirmPassword">確認密碼 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                    placeholder="請再次輸入密碼"
-                    required
-                  />
+                {/* 密碼跟確認密碼同一列 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="password">密碼 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleChange('password', e.target.value)}
+                      placeholder="請輸入密碼"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">確認密碼 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                      placeholder="請再次輸入密碼"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -241,96 +244,133 @@ const Register: React.FC = () => {
             {/* 基本資料 */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">基本資料</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="first_name">姓氏 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="first_name"
-                    type="text"
-                    value={formData.first_name}
-                    onChange={(e) => handleChange('first_name', e.target.value)}
-                    placeholder="請輸入姓氏"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="last_name">名字 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="last_name"
-                    type="text"
-                    value={formData.last_name}
-                    onChange={(e) => handleChange('last_name', e.target.value)}
-                    placeholder="請輸入名字"
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">手機號碼</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    placeholder="請輸入手機號碼"
-                  />
-                </div>
-                <div>
-                  <Label>性別</Label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="female"
-                        checked={formData.gender === 'female'}
-                        onChange={(e) => handleChange('gender', e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">女性</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="male"
-                        checked={formData.gender === 'male'}
-                        onChange={(e) => handleChange('gender', e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">男性</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value="other"
-                        checked={formData.gender === 'other'}
-                        onChange={(e) => handleChange('gender', e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">其他</span>
-                    </label>
+              <div className="space-y-4">
+                {/* 姓跟名同一列 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="first_name">姓氏 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="first_name"
+                      type="text"
+                      value={formData.first_name}
+                      onChange={(e) => handleChange('first_name', e.target.value)}
+                      placeholder="請輸入姓氏"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="last_name">名字 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="last_name"
+                      type="text"
+                      value={formData.last_name}
+                      onChange={(e) => handleChange('last_name', e.target.value)}
+                      placeholder="請輸入名字"
+                      required
+                    />
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="birth_date">出生日期</Label>
-                  <Input
-                    id="birth_date"
-                    type="date"
-                    value={formData.birth_date}
-                    onChange={(e) => handleChange('birth_date', e.target.value)}
-                  />
+
+                {/* 手機跟身分證同一列 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="phone">手機號碼</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleChange('phone', e.target.value)}
+                      placeholder="請輸入手機號碼"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="id_number">身分證字號</Label>
+                    <Input
+                      id="id_number"
+                      type="text"
+                      value={formData.id_number}
+                      onChange={(e) => handleChange('id_number', e.target.value)}
+                      placeholder="請輸入身分證字號"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="id_number">身分證字號</Label>
-                  <Input
-                    id="id_number"
-                    type="text"
-                    value={formData.id_number}
-                    onChange={(e) => handleChange('id_number', e.target.value)}
-                    placeholder="請輸入身分證字號"
-                  />
+
+                {/* 性別，出生同一列 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>性別</Label>
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="female"
+                          checked={formData.gender === 'female'}
+                          onChange={(e) => handleChange('gender', e.target.value)}
+                          className="w-3 h-3 text-blue-600"
+                        />
+                        <span className="text-xs">女性</span>
+                      </label>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="male"
+                          checked={formData.gender === 'male'}
+                          onChange={(e) => handleChange('gender', e.target.value)}
+                          className="w-3 h-3 text-blue-600"
+                        />
+                        <span className="text-xs">男性</span>
+                      </label>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="other"
+                          checked={formData.gender === 'other'}
+                          onChange={(e) => handleChange('gender', e.target.value)}
+                          className="w-3 h-3 text-blue-600"
+                        />
+                        <span className="text-xs">其他</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="birth_date">出生日期</Label>
+                    <Input
+                      id="birth_date"
+                      type="date"
+                      value={formData.birth_date}
+                      onChange={(e) => handleChange('birth_date', e.target.value)}
+                    />
+                  </div>
                 </div>
+
+                {/* 公司統編地址同一列 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company_tax_id">公司統編 <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="company_tax_id"
+                      type="text"
+                      value={formData.company_tax_id}
+                      onChange={(e) => handleChange('company_tax_id', e.target.value)}
+                      placeholder="請輸入公司統一編號"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address">地址</Label>
+                    <Input
+                      id="address"
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => handleChange('address', e.target.value)}
+                      placeholder="請輸入地址"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="employee_number">員工編號</Label>
                   <Input
@@ -341,34 +381,14 @@ const Register: React.FC = () => {
                     placeholder="請輸入員工編號"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="company_tax_id">公司統編 <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="company_tax_id"
-                    type="text"
-                    value={formData.company_tax_id}
-                    onChange={(e) => handleChange('company_tax_id', e.target.value)}
-                    placeholder="請輸入公司統一編號"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="address">地址</Label>
-                <Input
-                  id="address"
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => handleChange('address', e.target.value)}
-                  placeholder="請輸入地址"
-                />
               </div>
             </div>
 
             {/* 緊急聯絡人 */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">緊急聯絡人</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 緊急聯絡人姓名，電話同一列 */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="emergency_contact_name">緊急聯絡人姓名</Label>
                   <Input

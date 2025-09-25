@@ -10,7 +10,7 @@ The frontend can be configured for different environments:
 
 #### Production Environment (Firebase)
 - Uses `frontend/.env.production`
-- API Base URL: `https://timesheet.aerocars.cc/api/v1`
+- API Base URL: `https://timesheet-api.aerocars.cc/api/v1`
 - Deployed to: `https://timesheet-5fff2.web.app`
 
 #### Local Development Environment
@@ -21,7 +21,7 @@ The frontend can be configured for different environments:
 Create `frontend/.env.local` for local development:
 ```env
 # Use production API for local development
-VITE_API_BASE_URL=https://timesheet.aerocars.cc/api/v1
+VITE_API_BASE_URL=https://timesheet-api.aerocars.cc/api/v1
 VITE_APP_TITLE=Timesheet System (Dev)
 VITE_APP_VERSION=1.0.0-dev
 ```

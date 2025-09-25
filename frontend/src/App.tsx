@@ -1,6 +1,8 @@
 
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { UserProvider } from './contexts/UserContext';
+import { tokenManager, tokenAutoRefresh } from './services/api';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -10,6 +12,22 @@ import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 
 function App() {
+  useEffect(() => {
+    // 應用啟動時檢查是否有tokens，如果有則啟動自動更新機制
+    const accessToken = tokenManager.getAccessToken();
+    const refreshToken = tokenManager.getRefreshToken();
+
+    if (accessToken && refreshToken) {
+      tokenAutoRefresh.start();
+      console.log('Token自動更新機制已在應用啟動時啟動');
+    }
+
+    // 清理函數：在應用卸載時停止自動更新
+    return () => {
+      tokenAutoRefresh.stop();
+    };
+  }, []);
+
   return (
     <UserProvider>
       <Router>
